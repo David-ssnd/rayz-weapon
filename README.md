@@ -1,2 +1,1 @@
-# rayz-weapon
-The submodule of RayZ project.
+# RayZ Weapon Module
