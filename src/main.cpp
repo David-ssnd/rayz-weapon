@@ -1,36 +1,66 @@
-// RayZ Weapon Device
-// Using shared library for common protocol definitions
-
 #include <Arduino.h>
-#include "rayz_common.h"
+#include "config.h"
+#include "hash.h"
+#include "utils.h"
+#include "ble_weapon.h"
 
-const int LED_PIN = 2; // fallback to GPIO2
+BLEWeapon bleWeapon;
 
 void setup() {
+  pinMode(LASER_PIN, OUTPUT);
+  digitalWrite(LASER_PIN, LOW);
+  
   Serial.begin(115200);
-  while (!Serial) { delay(10); }
+  delay(1000);
   
-  Serial.println("=== RayZ Weapon Device ===");
-  Serial.printf("Protocol Version: %s\n", RAYZ_PROTOCOL_VERSION);
-  Serial.printf("Build Version: %s\n", RAYZ_VERSION);
-  Serial.printf("Device Type: WEAPON (0x%02X)\n", DEVICE_WEAPON);
-  Serial.println("=========================");
-  
-  pinMode(LED_PIN, OUTPUT);
+  // Initialize BLE
+  bleWeapon.begin();
 }
 
+void sendBit(bool bit) {
+  if (bit) {
+    digitalWrite(LASER_PIN, HIGH);
+  } else {
+    digitalWrite(LASER_PIN, LOW);
+  }
+  delay(BIT_DURATION_MS);
+}
+
+void sendMessage(uint16_t message) {
+  for (int i = MESSAGE_TOTAL_BITS - 1; i >= 0; i--) {
+    bool bit = (message >> i) & 0x01;
+    sendBit(bit);
+  }
+  digitalWrite(LASER_PIN, LOW);
+}
+
+uint16_t data = 0;
+
 void loop() {
-  // Create a heartbeat message using shared protocol
-  RayZMessage msg;
-  msg.deviceType = DEVICE_WEAPON;
-  msg.messageType = MSG_HEARTBEAT;
-  msg.payloadLength = 0;
+  // Handle BLE connection status
+  bleWeapon.handleConnection();
   
-  digitalWrite(LED_PIN, HIGH);
-  delay(200);
-  digitalWrite(LED_PIN, LOW);
-  delay(800);
+  data++;
+
+  uint16_t message = createMessage16bit(data);
   
-  Serial.printf("Weapon heartbeat - Type: 0x%02X, Msg: 0x%02X\n", 
-                msg.deviceType, msg.messageType);
+  // Send message via BLE first (if connected)
+  if (bleWeapon.isConnected()) {
+    bleWeapon.sendMessage(message);
+    Serial.print("📡 BLE sent | ");
+  } else {
+    Serial.print("⚠️  BLE N/A | ");
+  }
+  
+  // Then send via laser
+  sendMessage(message);
+  
+  Serial.print("► Laser | ");
+  Serial.print(millis());
+  Serial.print(" ms | ");
+  Serial.print(toBinaryString(message, MESSAGE_TOTAL_BITS));
+  Serial.print(" | Data: ");
+  Serial.println(data);
+
+  delay(TRANSMISSION_PAUSE_MS);
 }
