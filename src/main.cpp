@@ -13,16 +13,11 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   
-  // Initialize BLE
   bleWeapon.begin();
 }
 
 void sendBit(bool bit) {
-  if (bit) {
-    digitalWrite(LASER_PIN, HIGH);
-  } else {
-    digitalWrite(LASER_PIN, LOW);
-  }
+  digitalWrite(LASER_PIN, bit ? HIGH : LOW);
   delay(BIT_DURATION_MS);
 }
 
@@ -37,14 +32,11 @@ void sendMessage(uint16_t message) {
 uint16_t data = 0;
 
 void loop() {
-  // Handle BLE connection status
-  bleWeapon.handleConnection();
-  
   data++;
 
   uint16_t message = createMessage16bit(data);
   
-  // Send message via BLE first (if connected)
+  // Send via BLE
   if (bleWeapon.isConnected()) {
     bleWeapon.sendMessage(message);
     Serial.print("📡 BLE sent | ");
@@ -52,7 +44,7 @@ void loop() {
     Serial.print("⚠️  BLE N/A | ");
   }
   
-  // Then send via laser
+  // Send via laser
   sendMessage(message);
   
   Serial.print("► Laser | ");
@@ -61,6 +53,8 @@ void loop() {
   Serial.print(toBinaryString(message, MESSAGE_TOTAL_BITS));
   Serial.print(" | Data: ");
   Serial.println(data);
+
+  bleWeapon.handleConnection();
 
   delay(TRANSMISSION_PAUSE_MS);
 }
