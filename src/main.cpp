@@ -2,6 +2,7 @@
 #include "config.h"
 #include "hash.h"
 #include "utils.h"
+#include "wifi_manager.h"
 #include <driver/gpio.h>
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
@@ -16,18 +17,16 @@ BLEWeapon bleWeapon;
 // FreeRTOS queues
 QueueHandle_t laserMessageQueue;
 
-void sendBit(bool bit)
-{
-    gpio_set_level((gpio_num_t)LASER_PIN, bit ? 1 : 0);
-    vTaskDelay(pdMS_TO_TICKS(BIT_DURATION_MS));
-}
-
 void sendMessage(uint16_t message)
 {
+    TickType_t nextWake = xTaskGetTickCount();
+    const TickType_t bitPeriod = pdMS_TO_TICKS(BIT_DURATION_MS);
+
     for (int i = MESSAGE_TOTAL_BITS - 1; i >= 0; i--)
     {
         bool bit = (message >> i) & 0x01;
-        sendBit(bit);
+        gpio_set_level((gpio_num_t)LASER_PIN, bit ? 1 : 0);
+        vTaskDelayUntil(&nextWake, bitPeriod);
     }
     gpio_set_level((gpio_num_t)LASER_PIN, 0);
 }
@@ -52,14 +51,12 @@ void control_task(void* pvParameters)
         if (bleWeapon.isConnected())
         {
             bleWeapon.sendMessage(message);
-            ESP_LOGI(TAG, "📡 BLE sent | ► Laser | %lu ms | %s | Data: %u",
-                     pdTICKS_TO_MS(xTaskGetTickCount()),
+            ESP_LOGI(TAG, "[BLE+Laser] %lu ms | %s | Data: %u", pdTICKS_TO_MS(xTaskGetTickCount()),
                      toBinaryString(message, MESSAGE_TOTAL_BITS).c_str(), data);
         }
         else
         {
-            ESP_LOGI(TAG, "⚠️  BLE N/A | ► Laser | %lu ms | %s | Data: %u",
-                     pdTICKS_TO_MS(xTaskGetTickCount()),
+            ESP_LOGI(TAG, "[Laser only] %lu ms | %s | Data: %u", pdTICKS_TO_MS(xTaskGetTickCount()),
                      toBinaryString(message, MESSAGE_TOTAL_BITS).c_str(), data);
         }
 
@@ -98,6 +95,9 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "Weapon device starting...");
 
+    // Start WiFi provisioning / connection
+    wifi_manager_init("rayz-weapon", "weapon");
+
     // Initialize GPIO for laser
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -119,7 +119,7 @@ extern "C" void app_main(void)
 
     ESP_LOGI(TAG, "Weapon device ready");
 
-    // Create tasks
+    // Create tasks (WiFi runs independently)
     xTaskCreate(control_task, "control", 4096, NULL, 5, NULL);
     xTaskCreate(laser_task, "laser", 2048, NULL, 4, NULL);
     xTaskCreate(ble_task, "ble", 8192, NULL, 3, NULL);
