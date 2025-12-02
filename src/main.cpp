@@ -1,3 +1,8 @@
+// this line is here in order to not break the order of the includes because freertos must be before events
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
+
 #include "ble_weapon.h"
 #include "config.h"
 #include "hash.h"
@@ -5,10 +10,6 @@
 #include "wifi_manager.h"
 #include <driver/gpio.h>
 #include <esp_log.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/queue.h>
-#include <freertos/task.h>
-
 
 static const char* TAG = "Weapon";
 
@@ -38,6 +39,13 @@ void control_task(void* pvParameters)
 
     while (1)
     {
+        // Defer transmission until WiFi provisioning + STA connection is completed
+        if (!wifi_manager_is_connected())
+        {
+            vTaskDelay(pdMS_TO_TICKS(200));
+            continue;
+        }
+
         data++;
         uint16_t message = createMessage16bit(data);
 
