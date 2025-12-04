@@ -1,6 +1,12 @@
 idf_component_register(
     SRCS 
         "main.cpp"
+        "display_init.cpp"
+        "gpio_init.cpp"
+        "tasks/ble_task.cpp"
+        "tasks/control_task.cpp"
+        "tasks/laser_task.cpp"
+        "tasks/display_task.cpp"
     INCLUDE_DIRS 
         "../include"
     REQUIRES
