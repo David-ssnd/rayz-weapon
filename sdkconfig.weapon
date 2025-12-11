@@ -2267,6 +2267,12 @@ CONFIG_WIFI_PROV_STA_ALL_CHANNEL_SCAN=y
 CONFIG_RAYZ_BLE_QUEUE_LENGTH=10
 CONFIG_RAYZ_BLE_RECONNECT_DELAY_MS=500
 # end of RayZ Shared Component
+
+#
+# ESP WebSocket client
+#
+# CONFIG_ESP_WS_CLIENT_ENABLE_DYNAMIC_BUFFER is not set
+# end of ESP WebSocket client
 # end of Component config
 
 # CONFIG_IDF_EXPERIMENTAL_FEATURES is not set

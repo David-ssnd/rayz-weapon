@@ -8,6 +8,8 @@
 #include <lvgl.h>
 #include "ble_weapon.h"
 #include "wifi_manager.h"
+#include "game_state.h"
+#include "game_protocol.h"
 
 // Task includes
 #include "tasks.h"
@@ -44,6 +46,13 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "=== RayZ Weapon Starting ===");
 
+    // Initialize game state manager first
+    if (!game_state_init(DEVICE_ROLE_WEAPON)) {
+        ESP_LOGE(TAG, "Failed to initialize game state");
+        return;
+    }
+    ESP_LOGI(TAG, "Game state initialized - Device ID: %s", game_state_get_config()->device_id);
+
     // Check for factory reset
     init_reset_button_and_check_factory_reset();
 
@@ -69,9 +78,13 @@ extern "C" void app_main(void)
     xTaskCreate(laser_task, "laser", 2048, NULL, 4, NULL);
     xTaskCreate(ble_task, "ble", 8192, NULL, 3, NULL);
     xTaskCreate(display_task, "display", 4096, NULL, 2, NULL);
+    xTaskCreate(game_task, "game", 4096, NULL, 2, NULL);
 
     // WiFi init in separate low-priority task to not block critical functions
     xTaskCreate(wifi_init_task, "wifi_init", 4096, NULL, 1, NULL);
+    
+    // WebSocket task starts after WiFi is ready (it waits internally)
+    xTaskCreate(ws_task, "websocket", 8192, NULL, 2, NULL);
 
     ESP_LOGI(TAG, "All tasks created successfully");
 }

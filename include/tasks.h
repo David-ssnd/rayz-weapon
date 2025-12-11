@@ -5,5 +5,7 @@ void ble_task(void* pvParameters);
 void control_task(void* pvParameters);
 void display_task(void* pvParameters);
 void laser_task(void* pvParameters);
+void ws_task(void* pvParameters);
+void game_task(void* pvParameters);
 
 #endif // TASKS_H
