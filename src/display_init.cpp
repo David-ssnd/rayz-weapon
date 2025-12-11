@@ -8,7 +8,6 @@
 #include <lvgl.h>
 #include "config.h"
 
-
 static const char* TAG = "DisplayInit";
 
 // Global display state (defined in main.cpp)
@@ -103,10 +102,11 @@ bool init_display(void)
     esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer);
     esp_timer_start_periodic(lvgl_tick_timer, 1000); // 1ms = 1000us
 
-    // Create display buffer for monochrome (1 bit per pixel)
+    // Create display buffer for monochrome display
+    // Buffer size: full screen buffer to avoid partial update issues
     static lv_disp_draw_buf_t disp_buf;
-    static lv_color_t buf1[OLED_WIDTH * OLED_HEIGHT / 8]; // 1 bit per pixel = divide by 8
-    lv_disp_draw_buf_init(&disp_buf, buf1, NULL, OLED_WIDTH * OLED_HEIGHT / 8);
+    static lv_color_t buf1[OLED_WIDTH * OLED_HEIGHT];
+    lv_disp_draw_buf_init(&disp_buf, buf1, NULL, OLED_WIDTH * OLED_HEIGHT);
 
     // Register display driver
     static lv_disp_drv_t disp_drv;
@@ -121,21 +121,49 @@ bool init_display(void)
             int y1 = area->y1;
             int x2 = area->x2 + 1;
             int y2 = area->y2 + 1;
-            esp_lcd_panel_draw_bitmap(panel_handle, x1, y1, x2, y2, color_map);
+
+            // Validate coordinates before drawing
+            if (x1 >= 0 && y1 >= 0 && x2 > x1 && y2 > y1 && x2 <= OLED_WIDTH && y2 <= OLED_HEIGHT)
+            {
+                esp_lcd_panel_draw_bitmap(panel_handle, x1, y1, x2, y2, color_map);
+            }
         }
         lv_disp_flush_ready(drv);
     };
     disp_drv.draw_buf = &disp_buf;
     disp_drv.rounder_cb = [](lv_disp_drv_t* drv, lv_area_t* area)
     {
-        // Round to 8-pixel boundaries for monochrome display (pages)
-        area->y1 = (area->y1 >> 3) << 3;  // Round down to nearest 8
-        area->y2 = ((area->y2 >> 3) << 3) + 7;  // Round up to nearest 8 boundary
-        if (area->y2 >= OLED_HEIGHT) {
+        // Round to 8-pixel page boundaries for SSD1306
+        area->y1 = (area->y1 / 8) * 8;
+        area->y2 = (area->y2 / 8) * 8 + 7;
+
+        // Clamp to display bounds
+        if (area->x1 < 0)
+            area->x1 = 0;
+        if (area->y1 < 0)
+            area->y1 = 0;
+        if (area->x2 >= OLED_WIDTH)
+            area->x2 = OLED_WIDTH - 1;
+        if (area->y2 >= OLED_HEIGHT)
             area->y2 = OLED_HEIGHT - 1;
+    };
+    disp_drv.set_px_cb = [](lv_disp_drv_t* drv, uint8_t* buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
+                            lv_color_t color, lv_opa_t opa)
+    {
+        // SSD1306 uses vertical addressing: each byte represents 8 vertical pixels
+        uint16_t byte_index = x + (y / 8) * buf_w;
+        uint8_t bit_index = y % 8;
+
+        // Set or clear the bit based on color brightness
+        if (lv_color_brightness(color) > 128)
+        {
+            buf[byte_index] |= (1 << bit_index);
+        }
+        else
+        {
+            buf[byte_index] &= ~(1 << bit_index);
         }
     };
-    disp_drv.set_px_cb = NULL; // Use default pixel setter for monochrome
     lvgl_display = lv_disp_drv_register(&disp_drv);
 
     // Create UI elements - single centered line with built-in font
@@ -147,7 +175,7 @@ bool init_display(void)
     lv_obj_set_style_text_color(label_wifi, lv_color_white(), 0);
     // Use default font or uncrustify (built-in monospace font that's always available)
     lv_obj_align(label_wifi, LV_ALIGN_CENTER, 0, 0);
-    
+
     // Force initial render
     lv_refr_now(lvgl_display);
 
