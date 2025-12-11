@@ -2,10 +2,11 @@
 #include <freertos/task.h>
 #include <esp_log.h>
 #include <lvgl.h>
+#include "game_protocol.h"
+#include "game_state.h"
 #include "tasks.h"
 #include "wifi_manager.h"
-#include "game_state.h"
-#include "game_protocol.h"
+
 
 static const char* TAG = "DisplayTask";
 
@@ -28,18 +29,19 @@ void display_task(void* pvParameters)
             {
                 const GameStateData* state = game_state_get();
                 const DeviceConfig* config = game_state_get_config();
-                
+
                 if (wifi_manager_is_connected())
                 {
                     // Show game info when connected
-                    if (state->state == GAME_STATE_RESPAWNING) {
+                    if (state->state == GAME_STATE_RESPAWNING)
+                    {
                         snprintf(line_buf, sizeof(line_buf), "RESPAWNING...");
-                    } else {
+                    }
+                    else
+                    {
                         // Format: K:0 D:0 | free
-                        snprintf(line_buf, sizeof(line_buf), "K:%lu D:%lu | %s",
-                                 (unsigned long)state->kills,
-                                 (unsigned long)state->deaths,
-                                 GAMEMODE_NAMES[state->mode]);
+                        snprintf(line_buf, sizeof(line_buf), "K:%lu D:%lu | %s", (unsigned long)state->kills,
+                                 (unsigned long)state->deaths, GAMEMODE_NAMES[state->mode]);
                     }
                 }
                 else
