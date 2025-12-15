@@ -2,13 +2,16 @@ idf_component_register(
     SRCS 
         "main.cpp"
         "display_init.cpp"
+        "display_manager.cpp"
+        "runtime_metrics.cpp"
         "gpio_init.cpp"
-        "tasks/ble_task.cpp"
+        "debug_print.cpp"
         "tasks/control_task.cpp"
         "tasks/laser_task.cpp"
-        "tasks/display_task.cpp"
         "tasks/ws_task.cpp"
         "tasks/game_task.cpp"
+        "tasks/espnow_task.c"
+        "tasks/wifi_task.c"
     INCLUDE_DIRS 
         "../include"
     REQUIRES

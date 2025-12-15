@@ -10,7 +10,7 @@ static const char* TAG = "LaserTask";
 
 extern QueueHandle_t laserMessageQueue;
 
-static void sendMessage(uint16_t message)
+static void sendMessage(uint32_t message)
 {
     TickType_t nextWake = xTaskGetTickCount();
     const TickType_t bitPeriod = pdMS_TO_TICKS(BIT_DURATION_MS);
@@ -27,7 +27,7 @@ static void sendMessage(uint16_t message)
 void laser_task(void* pvParameters)
 {
     ESP_LOGI(TAG, "Laser task started");
-    uint16_t message;
+    uint32_t message;
 
     while (1)
     {

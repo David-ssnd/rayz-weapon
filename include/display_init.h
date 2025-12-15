@@ -1,12 +1,15 @@
-#ifndef DISPLAY_INIT_H
-#define DISPLAY_INIT_H
+#pragma once
+#include <lvgl.h>
 
-#include <stdbool.h>
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-/**
- * @brief Initialize the OLED display with LVGL
- * @return true if initialization successful, false otherwise
- */
-bool init_display(void);
+    // Initializes I2C + SSD1306 + LVGL display driver
+    // Returns lv_disp_t* on success, NULL on failure
+    lv_disp_t* init_display(void);
 
-#endif // DISPLAY_INIT_H
+#ifdef __cplusplus
+}
+#endif
