@@ -102,8 +102,8 @@ static void render_debug(uint8_t page, bool slow)
     else if (wifi)
     {
         // WiFi Connected: Show IP and SSID
-        snprintf(r2, sizeof(r2), "%s - CONNECTED", ssid);
-        snprintf(r1, sizeof(r1), "RSSI:%d", s_src.wifi_rssi ? s_src.wifi_rssi() : 0);
+        snprintf(r1, sizeof(r1), "%s - OK", ssid);
+        snprintf(r2, sizeof(r2), "RSSI:%d", s_src.wifi_rssi ? s_src.wifi_rssi() : 0);
         snprintf(r3, sizeof(r3), "%s", ip);
     }
     else
