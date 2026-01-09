@@ -81,15 +81,33 @@ static void render_debug(uint8_t page, bool slow)
     char r1[32], r2[32], r3[32];
 
     const bool wifi = s_src.wifi_connected ? s_src.wifi_connected() : false;
+    const bool ws = s_src.ws_connected ? s_src.ws_connected() : false;
+    
+    // Data Sources
+    const char* ssid = s_src.wifi_ssid ? s_src.wifi_ssid() : "?";
+    const char* status = s_src.wifi_status ? s_src.wifi_status() : "?";
     const char* ip = (s_src.wifi_ip && wifi) ? s_src.wifi_ip() : "--";
-    const int rssi = (s_src.wifi_rssi && wifi) ? s_src.wifi_rssi() : 0;
-
+    const char* dname = s_src.device_name ? s_src.device_name() : "Device";
     const int pid = s_src.player_id ? s_src.player_id() : -1;
     const int did = s_src.device_id ? s_src.device_id() : -1;
 
-    snprintf(r1, sizeof(r1), "W:%s R:%d", wifi ? "OK" : "--", rssi);
-    snprintf(r2, sizeof(r2), "IP:%s", ip);
-    snprintf(r3, sizeof(r3), "PID:%d DID:%d", pid, did);
+    // Prioritized Display Logic
+    if (ws) {
+        // WS Connected: Show Name and IDs
+        snprintf(r1, sizeof(r1), "%s", dname);
+        snprintf(r2, sizeof(r2), "DevID:%d", did);
+        snprintf(r3, sizeof(r3), "PlyID:%d", pid);
+    } else if (wifi) {
+        // WiFi Connected: Show IP and SSID
+        snprintf(r1, sizeof(r1), "WiFi OK");
+        snprintf(r2, sizeof(r2), "%s", ssid);
+        snprintf(r3, sizeof(r3), "%s", ip);
+    } else {
+        // Not Connected: Show Status and SSID (AP or Connecting)
+        snprintf(r1, sizeof(r1), "%s", status);
+        snprintf(r2, sizeof(r2), "%s", ssid);
+        snprintf(r3, sizeof(r3), "RSSI:%d", s_src.wifi_rssi ? s_src.wifi_rssi() : 0);
+    }
 
     set_rows(r1, r2, r3);
 }

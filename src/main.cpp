@@ -13,9 +13,15 @@
 #include "gpio_init.h"
 #include "tasks.h"
 #include "wifi_manager.h"
+#include "ws_server.h"
 
 static const char* TAG = "Weapon";
 QueueHandle_t laserMessageQueue;
+
+static bool is_ws_connected(void)
+{
+    return ws_server_client_count() > 0;
+}
 
 extern "C" void app_main(void)
 {
@@ -60,10 +66,15 @@ extern "C" void app_main(void)
         dm_sources_t dm_sources = {
             .wifi_connected = wifi_manager_is_connected,
             .wifi_ip = wifi_manager_get_ip,
+            .wifi_ssid = wifi_manager_get_ssid,
+            .wifi_status = wifi_manager_get_status_string,
             .wifi_rssi = wifi_manager_get_rssi,
 
             .uptime_ms = system_uptime_ms,
             .free_heap = system_free_heap,
+
+            .ws_connected = is_ws_connected,
+            .device_name = wifi_manager_get_device_name,
 
             .player_id = metric_player_id,
             .device_id = metric_device_id,

@@ -38,10 +38,15 @@ extern "C"
         // “pull” callbacks so DM doesn’t depend on your modules directly
         bool (*wifi_connected)(void);
         const char* (*wifi_ip)(void);
+        const char* (*wifi_ssid)(void);
+        const char* (*wifi_status)(void);
         int (*wifi_rssi)(void);
 
         uint32_t (*uptime_ms)(void);
         uint32_t (*free_heap)(void);
+
+        bool (*ws_connected)(void);
+        const char* (*device_name)(void);
 
         // optional game data
         int (*player_id)(void);
