@@ -4,7 +4,7 @@
 #include "protocol_config.h"
 
 #define LASER_PIN 5
-#define RESET_BUTTON_PIN 0
+#define RESET_BUTTON_PIN 0    // GPIO 0 with pull-up
 #define TRIGGER_BUTTON_PIN 10 // TODO: Set correct GPIO for trigger button
 
 #define RESET_DELAY_MS 2000

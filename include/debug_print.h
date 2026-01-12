@@ -1,13 +1,6 @@
 #ifndef DEBUG_PRINT_H
 #define DEBUG_PRINT_H
 
-#include "nvs_flash.h"
-#include "nvs_store.h"
-#include "wifi_internal.h"
-
-/**
- * @brief Debug function to print all NVS contents to log
- */
-void debug_print_nvs_contents(void);
+#include "../../shared/include/debug_print.h"
 
 #endif // DEBUG_PRINT_H

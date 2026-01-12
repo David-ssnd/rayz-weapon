@@ -1,11 +1,6 @@
 idf_component_register(
     SRCS 
         "main.cpp"
-        "display_init.cpp"
-        "display_manager.cpp"
-        "runtime_metrics.cpp"
-        "gpio_init.cpp"
-        "debug_print.cpp"
         "tasks/control_task.cpp"
         "tasks/laser_task.cpp"
         "tasks/ws_task.cpp"
@@ -18,4 +13,5 @@ idf_component_register(
         driver
         nvs_flash
         shared
+        esp_websocket_client
 )
