@@ -1,12 +1,13 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <stdio.h>
 #include <esp_log.h>
-#include "game_state.h"
+#include <stdio.h>
 #include "display_manager.h"
+#include "game_state.h"
 #include "tasks.h"
 #include "wifi_manager.h"
 #include "ws_server.h"
+
 
 static const char* TAG = "WsTask";
 
@@ -38,6 +39,9 @@ void ws_task(void* pvParameters)
 
     while (1)
     {
+        // Cleanup stale clients (handles browser refresh without close frame)
+        ws_server_cleanup_stale();
+
         if (ws_server_is_connected() && game_state_heartbeat_due())
         {
             ws_server_send_status();
